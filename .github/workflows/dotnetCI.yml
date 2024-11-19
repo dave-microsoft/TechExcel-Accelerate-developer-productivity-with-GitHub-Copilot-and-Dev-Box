@@ -1,4 +1,4 @@
-name: .NET CD
+name: .NET CI
 
 env:
   registryName: rltuztndcef7cmpnpreg.azurecr.io
@@ -7,9 +7,9 @@ env:
   tag: ${{github.run_number}}
 
 on:
-  push:
-    branches: [ main ]
-    paths: src/Application/**
+  # push:
+  #   branches: [ main ]
+  #   paths: src/Application/**
   pull_request:
     branches: [ main ]
     paths: src/Application/**
@@ -58,66 +58,7 @@ jobs:
     - name: Docker Build
       run: docker build -t $registryName/$repositoryName:$tag --build-arg build_version=$tag $dockerFolderPath
       
-    - name: Docker Push
-      run: docker push $registryName/$repositoryName:$tag
+    # - name: Docker Push
+    #   run: docker push $registryName/$repositoryName:$tag
 
-  deploy-to-dev:
   
-    runs-on: ubuntu-latest
-    needs: dockerBuildPush
-    environment:
-      name: dev
-      url: https://rltuztndcef7c-dev.azurewebsites.net/
-    
-    steps:
-      - name: 'Login via Azure CLI'
-        uses: azure/login@v2.1.1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'rltuztndcef7c-dev'
-          images: rltuztndcef7cmpnpreg.azurecr.io/techexcel/dotnetcoreapp:${{github.run_number}}
-
-  deploy-to-test:
-  
-    runs-on: ubuntu-latest
-    needs: deploy-to-dev
-    environment:
-      name: test
-      url: https://rltuztndcef7c-test.azurewebsites.net/
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: 'Login via Azure CLI'
-      uses: azure/login@v2.1.1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'rltuztndcef7c-test'
-        images: rltuztndcef7cmpnpreg.azurecr.io/techexcel/dotnetcoreapp:${{github.run_number}}
-
-  deploy-to-prod:
-  
-    runs-on: ubuntu-latest
-    needs: deploy-to-test
-    environment:
-      name: prod
-      url: https://rltuztndcef7c-prod.azurewebsites.net/
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: 'Login via Azure CLI'
-      uses: azure/login@v2.1.1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'rltuztndcef7c-prod'
-        images: rltuztndcef7cmpnpreg.azurecr.io/techexcel/dotnetcoreapp:${{github.run_number}}
